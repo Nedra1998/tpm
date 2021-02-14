@@ -27,6 +27,8 @@ endif(CCACHE_FOUND)
 include(WriteCompilerDetectionHeader)
 include(cotire)
 
+find_package(OpenCL REQUIRED)
+
 # --- Sub Directories ---
 
 add_subdirectory(src)

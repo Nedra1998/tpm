@@ -9,29 +9,8 @@
 #endif
 
 #include "argparse.h"
-#include "compiler.h"
 #include "log.h"
-#include "version.h"
-
-void log_sysinfo() {
-  linfo("%s", TPM_VERSION_STRING);
-#if TPM_COMPILER_IS_AppleClang
-  ldebug("Compiler: AppleClang v%d.%d.%d", TPM_COMPILER_VERSION_MAJOR,
-        TPM_COMPILER_VERSION_MINOR, TPM_COMPILER_VERSION_PATCH);
-#elif TPM_COMPILER_IS_Clang
-  ldebug("Compiler: Clang v%d.%d.%d", TPM_COMPILER_VERSION_MAJOR,
-        TPM_COMPILER_VERSION_MINOR, TPM_COMPILER_VERSION_PATCH);
-#elif TPM_COMPILER_IS_GNU
-  ldebug("Compiler: GNU v%d.%d.%d", TPM_COMPILER_VERSION_MAJOR,
-        TPM_COMPILER_VERSION_MINOR, TPM_COMPILER_VERSION_PATCH);
-#elif TPM_COMPILER_IS_Intel
-  ldebug("Compiler: Intel v%d.%d.%d", TPM_COMPILER_VERSION_MAJOR,
-        TPM_COMPILER_VERSION_MINOR, TPM_COMPILER_VERSION_PATCH);
-#elif TPM_COMPILER_IS_MSVC
-  ldebug("Compiler: MSVC v%d.%d.%d", TPM_COMPILER_VERSION_MAJOR,
-        TPM_COMPILER_VERSION_MINOR, TPM_COMPILER_VERSION_PATCH);
-#endif
-}
+#include "sysinfo.h"
 
 int main(int argc, char *argv[]) {
   Args args;
@@ -57,7 +36,7 @@ int main(int argc, char *argv[]) {
     } else {
       ret &= log_add_sink((LogSink){stdout, LOG_INFO, should_use_color, NULL});
     }
-    log_file = fopen("gpu-rt.log", "a");
+    log_file = fopen("tpm.log", "a");
     if (log_file == NULL) {
       ret = false;
     } else {
