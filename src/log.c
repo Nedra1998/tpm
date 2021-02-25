@@ -1,5 +1,6 @@
 #include "log.h"
 
+#include <time.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,10 +25,12 @@ void log_vlog(enum LogLevel level, const char *file, int line, const char *fmt,
   char payload[LOG_MAX_PAYLOAD_LENGTH];
   stbsp_vsnprintf(payload, LOG_MAX_PAYLOAD_LENGTH, fmt, args);
 
-  LogEvent ev = {level, file, line, NULL, payload};
+  LogEvent ev = {level, file, line, 0, 0, payload};
 
-  time_t t = time(NULL);
-  ev.time = localtime(&t);
+  struct timespec tp;
+  clock_gettime(CLOCK_REALTIME, &tp);
+  ev.time_sec = tp.tv_sec;
+  ev.time_nsec = tp.tv_nsec;
 
   for (int i = 0; i < sink_index; ++i) {
     if (ev.level >= sinks[i].level)
@@ -87,7 +90,12 @@ void log_print(FILE *fifo, const char *fmt, bool colored, const LogEvent *ev) {
                   LOG_MSG_LENGTH - idx);
           idx += strlen(log_field_color[LOG_TIME]);
         }
-        idx += strftime(buffer + idx, LOG_MSG_LENGTH - idx, "%T", ev->time);
+        struct tm *time = gmtime(&ev->time_sec);
+        idx += stbsp_snprintf(
+            buffer + idx, LOG_MSG_LENGTH - idx, "%02d:%02d:%02d.%03u",
+            time->tm_hour, time->tm_min, time->tm_sec, ev->time_nsec / 1000000);
+        /* idx += strftime(buffer + idx, LOG_MSG_LENGTH - idx, "%T", ev->time);
+         */
         if (colored && log_field_color[LOG_TIME] != NULL) {
           strncpy(buffer + idx, reset, LOG_MSG_LENGTH - idx);
           idx += strlen(reset);
@@ -102,7 +110,14 @@ void log_print(FILE *fifo, const char *fmt, bool colored, const LogEvent *ev) {
                   LOG_MSG_LENGTH - idx);
           idx += strlen(log_field_color[LOG_TIME]);
         }
-        idx += strftime(buffer + idx, LOG_MSG_LENGTH - idx, "%F %T", ev->time);
+        struct tm *time = gmtime(&ev->time_sec);
+        idx += stbsp_snprintf(buffer + idx, LOG_MSG_LENGTH - idx,
+                              "%04d-%02d-%02d %02d:%02d:%02d.%03u",
+                              time->tm_year + 1900, time->tm_mon, time->tm_mday,
+                              time->tm_hour, time->tm_min, time->tm_sec,
+                              ev->time_nsec / 1000000);
+        /* idx += strftime(buffer + idx, LOG_MSG_LENGTH - idx, "%F %T",
+         * ev->time); */
         if (colored && log_field_color[LOG_TIME] != NULL) {
           strncpy(buffer + idx, reset, LOG_MSG_LENGTH - idx);
           idx += strlen(reset);

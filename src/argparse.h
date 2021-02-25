@@ -10,10 +10,13 @@ typedef struct Args {
   const char *input;
 } Args;
 
-bool filename_validator(const char *arg, const char **extensions,
+bool argparse_exists(const char* arg);
+bool argparse_isfile(const char *arg);
+bool argparse_isdir(const char* arg);
+
+bool argparse_choice(const char *arg, const char **choices, int n_choices);
+bool argparse_choice_ext(const char *arg, const char **extensions,
                         int n_extensions);
-bool file_validator(const char *arg);
-bool choice_validator(const char *arg, const char **choices, int n_choices);
 int parse_args(int argc, char *argv[], struct Args *args);
 
 #endif /* end of include guard: ARGPARSE_H_VL3W9CDY */

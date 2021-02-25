@@ -11,6 +11,8 @@
 #include "argparse.h"
 #include "log.h"
 #include "sysinfo.h"
+#include "image.h"
+#include "render.h"
 
 int main(int argc, char *argv[]) {
   Args args;
@@ -48,6 +50,25 @@ int main(int argc, char *argv[]) {
   }
 
   log_sysinfo();
+
+  RenderImageArgs frame_settings = {
+    .filename = args.output,
+    .resolution = { 50, 50 },
+    .camera = {
+      .eye = {0.0, 0.0, 0.0},
+      .center = {0.0, 0.0, 1.0},
+      .up = {0.0, 1.0, 0.0},
+      .fov = 1.5707f,
+    },
+    .spp = 1
+  };
+  render_image(frame_settings);
+  /* float data[500 * 500 * 3] = {1.0f}; */
+  /*  */
+  /*  */
+  /* if(!write_image(args.output, 500, 500, data)) { */
+  /*   return 1; */
+  /* } */
 
   if (log_file != NULL)
     fclose(log_file);

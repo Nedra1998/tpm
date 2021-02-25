@@ -56,7 +56,8 @@ typedef struct LogEvent {
   enum LogLevel level;
   const char *file;
   int line;
-  struct tm *time;
+  time_t time_sec;
+  long time_nsec;
   char *payload;
 } LogEvent;
 

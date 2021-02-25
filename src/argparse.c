@@ -1,8 +1,10 @@
 #include "argparse.h"
 
 #include <argp.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "stb.h"
@@ -23,8 +25,9 @@ static char doc[] =
 static char args_doc[] = "INPUT";
 
 static struct argp_option options[] = {
+    {0, 0, 0, 0, "Output:", 1},
     {"output", 'o', "FILE", 0, "override output filename"},
-    {0, 0, 0, 0, "Logging:", 1},
+    {0, 0, 0, 0, "Logging:", 2},
     {"verbose", 'v', 0, 0, "run verbosely"},
     {"quiet", 'q', 0, 0, "suppress all output"},
     {"color", 'c', "COLOR", OPTION_ARG_OPTIONAL, "use color in the output"},
@@ -36,34 +39,34 @@ static const char *input_extensions[] = {".cl"};
 static int n_input_extensions =
     sizeof(input_extensions) / sizeof(input_extensions[0]);
 static const char *output_extensions[] = {
-    ".bmp", ".dip", ".hdr", ".icb", ".jfi", ".jfif", ".jif", ".jpe", ".jpeg",
-    ".jpg", ".pbm", ".pgm", ".png", ".pnm", ".ppm",  ".tga", ".vda", ".vst",
-};
+    ".bmp", ".dip",  ".hdr", ".icb", ".jfi", ".jfif", ".jif",
+    ".jpe", ".jpeg", ".jpg", ".pbm", ".pgm", ".png",  ".pnm",
+    ".ppm", ".tga",  ".vda", ".vst", ".hex"};
 static int n_output_extensions =
     sizeof(output_extensions) / sizeof(output_extensions[0]);
 
-bool filename_validator(const char *arg, const char **extensions,
-                        int n_extensions) {
-  char ext[8];
-  stb_splitpath(ext, (char *)arg, STB_EXT);
-  for (int i = 0; i < n_extensions; ++i) {
-    if (strncmp(ext, extensions[i], 8) == 0)
-      return true;
-  }
-  return false;
+bool argparse_exists(const char *arg) { return access(arg, F_OK) == 0; }
+bool argparse_isfile(const char *arg) {
+  struct stat sb;
+  return stat(arg, &sb) == 0 && S_ISREG(sb.st_mode);
 }
-bool file_validator(const char *arg) {
-  if (access(arg, F_OK) != 0) {
-    return false;
-  }
-  return true;
+bool argparse_isdir(const char *arg) {
+  struct stat sb;
+  return stat(arg, &sb) == 0 && S_ISDIR(sb.st_mode);
 }
-bool choice_validator(const char *arg, const char **choices, int n_choices) {
+
+bool argparse_choice(const char *arg, const char **choices, int n_choices) {
   for (int i = 0; i < n_choices; ++i) {
     if (strncmp(arg, choices[i], strlen(choices[i])) == 0)
       return true;
   }
   return false;
+}
+bool argparse_choice_ext(const char *arg, const char **extensions,
+                         int n_extensions) {
+  char ext[8];
+  stb_splitpath(ext, (char *)arg, STB_EXT);
+  return argparse_choice(ext, extensions, n_extensions);
 }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
@@ -76,37 +79,32 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     arguments->verbose = true;
     break;
   case 'o':
-    if (!filename_validator(arg, output_extensions, n_output_extensions))
-      argp_failure(state, 1, 22,
-                   "invalid file extension '%s' (must be one of"
-                   "'.bmp', '.dip', '.hdr', '.icb', '.jfi', '.jfif', '.jif', "
-                   "'.jpe', '.jpeg', '.jpg', '.pbm', '.pgm', '.png', '.pnm', "
-                   "'.ppm', '.tga', '.vda', '.vst')",
-                   arg);
+    if (!argparse_choice_ext(arg, output_extensions, n_output_extensions))
+      argp_failure(state, 1, EINVAL, "%s", arg);
     else
       arguments->output = arg;
     break;
   case 'c':
     if (arg == NULL)
       arguments->color = "always";
-    else if (!choice_validator(arg, color_choices, n_color_choices))
-      argp_failure(state, 1, 22, "%s", arg);
+    else if (!argparse_choice(arg, color_choices, n_color_choices))
+      argp_failure(state, 1, EINVAL, "%s", arg);
     else
       arguments->color = arg;
     break;
   case ARGP_KEY_ARG:
     if (state->arg_num >= 1)
       argp_usage(state);
-    else if (!file_validator(arg))
-      argp_failure(state, 1, 2, "%s", arg);
-    else if (!filename_validator(arg, input_extensions, n_input_extensions))
-      argp_failure(state, 1, 22, "%s", arg);
+    else if (!argparse_exists(arg))
+      argp_failure(state, 1, ENOENT, "%s", arg);
+    else if (argparse_isdir(arg))
+      argp_failure(state, 1, EISDIR, "%s", arg);
+    else if (!argparse_choice_ext(arg, input_extensions, n_input_extensions))
+      argp_failure(state, 1, EINVAL, "%s", arg);
     else
       arguments->input = arg;
     break;
   case ARGP_KEY_END:
-    if (state->arg_num < 1)
-      argp_usage(state);
     break;
   default:
     return ARGP_ERR_UNKNOWN;
