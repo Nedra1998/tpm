@@ -1,0 +1,15 @@
+[submodule "extern/Catch2"]
+	path = extern/Catch2
+	url = git@github.com:catchorg/Catch2.git
+[submodule "extern/spdlog"]
+	path = extern/spdlog
+	url = git@github.com:gabime/spdlog.git
+[submodule "extern/magic_enum"]
+	path = extern/magic_enum
+	url = git@github.com:Neargye/magic_enum.git
+[submodule "extern/CLI11"]
+	path = extern/CLI11
+	url = git@github.com:CLIUtils/CLI11.git
+[submodule "extern/fmt"]
+	path = extern/fmt
+	url = git@github.com:fmtlib/fmt.git
