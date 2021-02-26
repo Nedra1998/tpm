@@ -16,7 +16,11 @@
 #include <magic_enum.hpp>
 #include <spdlog/common.h>
 #include <tpm/logging.hpp>
+#include <tpm/tpm.hpp>
 #include <tpm/version.hpp>
+#include <glm/glm.hpp>
+
+#include "cli_validators.hpp"
 
 enum TermColor { AUTO, ALWAYS, NEVER };
 static const std::map<std::string, TermColor> term_color_map{
@@ -28,7 +32,11 @@ static const std::map<std::string, spdlog::level::level_enum> log_level_map{
     {"off", spdlog::level::off}};
 
 int main(int argc, char **argv) {
-  CLI::App app{fmt::format("TPM v{}", tpm::version::core)};
+  CLI::App app{fmt::format("TPM v{} - Tiny Path Marcher", tpm::version::core)};
+
+  bool version_message;
+  app.add_flag("-V,--version", version_message,
+               "Print the version information and exit");
 
   TermColor term_color = TermColor::AUTO;
   spdlog::level::level_enum log_level = spdlog::level::level_enum::err;
@@ -48,11 +56,17 @@ int main(int argc, char **argv) {
       ->default_str("tpm.log")
       ->group("Logging");
 
+  std::string output = "output/{1:05d}.png";
+
+  app.add_option("-o,--output", output, "Set output file path", true)
+      ->check(CLI::RegexValidator(
+          ".*\\.((bmp)|(hdr)|(jpe|jpeg|jpg)|(png)|(tga)|(p[bnp]m))"))
+      ->group("Output");
+
   try {
     app.parse(argc, argv);
   } catch (CLI::ParseError &err) {
-    app.exit(err);
-    return -1;
+    return app.exit(err);
   }
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -62,6 +76,11 @@ int main(int argc, char **argv) {
 #else
   bool isatty = false;
 #endif
+
+  if (version_message) {
+    fmt::print("TPM v{}\n", tpm::version::semver);
+    return 0;
+  }
 
   try {
     std::shared_ptr<spdlog::sinks::dist_sink_mt> dist_sink =
@@ -75,13 +94,30 @@ int main(int argc, char **argv) {
       sink->set_level(log_level);
       dist_sink->add_sink(sink);
     }
+
+    {
+      auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file);
+#ifdef NDEBUG
+      sink->set_level(spdlog::level::info);
+#else
+      sink->set_level(spdlog::level::trace);
+      dist_sink->add_sink(sink);
+#endif
+    }
     tpm::logging::dist_sink = dist_sink;
   } catch (const spdlog::spdlog_ex &ex) {
     std::cerr << "Log initialization failed: " << ex.what() << std::endl;
     return -1;
   }
 
-  LINFO("tpm::bin", "HEY!");
+  tpm::Scene scene{tpm::Camera{90.0f, glm::fvec3(0.0, 0.0, 0.0),
+                               glm::fvec3(0.0, 0.0, 10.0),
+                               glm::fvec3(0.0, 1.0, 0.0)},
+                   tpm::Film{output, glm::uvec2(1920, 1080)},
+                   {0.0, 2.0},
+                   60.0};
+
+  tpm::render(scene);
 
   return 0;
 }
