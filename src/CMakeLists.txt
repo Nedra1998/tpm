@@ -33,7 +33,7 @@ set_target_properties(tpm PROPERTIES CXX_EXTENSIONS OFF)
 
 target_link_libraries(
   tpm
-  PUBLIC spdlog glm
+  PUBLIC spdlog
   PRIVATE magic_enum fmt::fmt)
 target_include_directories(
   tpm

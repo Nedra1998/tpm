@@ -12,6 +12,7 @@
 #include <CLI/App.hpp>
 #include <CLI/Config.hpp>
 #include <CLI/Formatter.hpp>
+#include <CLI/Validators.hpp>
 #include <fmt/format.h>
 #include <magic_enum.hpp>
 #include <spdlog/common.h>
@@ -40,7 +41,8 @@ int main(int argc, char **argv) {
 
   TermColor term_color = TermColor::AUTO;
   spdlog::level::level_enum log_level = spdlog::level::level_enum::err;
-  std::string log_file = "tpm.log";
+  std::string log_file = "logs/tpm.log";
+  std::size_t log_file_size = 5e6;
 
   app.add_flag("-c{always},--color{always},-C{never},--no-color{never}",
                term_color, "Configure terminal logging coloring")
@@ -54,6 +56,10 @@ int main(int argc, char **argv) {
       ->group("Logging");
   app.add_option("--log-file", log_file, "Set logfile output path")
       ->default_str("tpm.log")
+      ->group("Logging");
+  app.add_option("--log-file-size", log_file_size, "Set log file maximum size")
+      ->default_str("5mb")
+      ->transform(CLI::AsSizeValue(true))
       ->group("Logging");
 
   std::string output = "output/{1:05d}.png";
@@ -96,7 +102,8 @@ int main(int argc, char **argv) {
     }
 
     {
-      auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file);
+      auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+          log_file, log_file_size, 5);
 #ifdef NDEBUG
       sink->set_level(spdlog::level::info);
 #else
