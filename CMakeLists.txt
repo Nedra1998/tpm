@@ -85,6 +85,8 @@ add_formatting(
 include(Analyzers)
 global_analyze()
 
+find_package(OpenCL)
+
 add_subdirectory(extern/CLI11 EXCLUDE_FROM_ALL)
 add_subdirectory(extern/Catch2 EXCLUDE_FROM_ALL)
 add_subdirectory(extern/fmt EXCLUDE_FROM_ALL)

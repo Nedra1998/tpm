@@ -31,12 +31,19 @@ add_library(tpm::tpm ALIAS tpm)
 target_compile_features(tpm PUBLIC cxx_std_20)
 set_target_properties(tpm PROPERTIES CXX_EXTENSIONS OFF)
 
-target_link_libraries(tpm PUBLIC spdlog glm PRIVATE magic_enum fmt::fmt)
+target_link_libraries(
+  tpm
+  PUBLIC spdlog glm
+  PRIVATE magic_enum fmt::fmt)
 target_include_directories(
   tpm
   PUBLIC ${PROJECT_SOURCE_DIR}/include/ ${CMAKE_CURRENT_BINARY_DIR}/include/
   PRIVATE ${PROJECT_SOURCE_DIR}/include/tpm
           ${CMAKE_CURRENT_BINARY_DIR}/include/tpm)
+
+if(OpenCL_FOUND)
+  target_link_libraries(tpm PRIVATE OpenCL::OpenCL)
+endif()
 
 set_target_properties(tpm PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${TPM_IPO})
 target_precompile_headers(tpm PRIVATE <string>)

@@ -4,11 +4,20 @@
 #include "spline.hpp"
 #include "version.hpp"
 #include "scene.hpp"
+#include "linalg.hpp"
+
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
+
+#include <fmt/format.h>
 
 bool tpm::render(const Scene &scene) {
   LINFO("tpm", "TPM v{}", version::semver);
   LTRACE("tpm", "tpm::render({})", scene);
-
+  
   bool success = true;
   std::size_t frame_id = 0;
   for (float t = scene.time_range.first; t <= scene.time_range.second;

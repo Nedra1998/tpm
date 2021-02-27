@@ -15,10 +15,10 @@
 #include <fmt/format.h>
 #include <magic_enum.hpp>
 #include <spdlog/common.h>
+#include <tpm/linalg.hpp>
 #include <tpm/logging.hpp>
 #include <tpm/tpm.hpp>
 #include <tpm/version.hpp>
-#include <glm/glm.hpp>
 
 #include "cli_validators.hpp"
 
@@ -110,10 +110,10 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  tpm::Scene scene{tpm::Camera{90.0f, glm::fvec3(0.0, 0.0, 0.0),
-                               glm::fvec3(0.0, 0.0, 10.0),
-                               glm::fvec3(0.0, 1.0, 0.0)},
-                   tpm::Film{output, glm::uvec2(1920, 1080)},
+  tpm::Scene scene{tpm::Camera{90.0f, tpm::fVector3(0.0, 0.0, 0.0),
+                               tpm::fVector3(0.0, 0.0, 10.0),
+                               tpm::fVector3(0.0, 1.0, 0.0)},
+                   tpm::Film{output, {1920, 1080}},
                    {0.0, 2.0},
                    60.0};
 

@@ -3,10 +3,9 @@
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
+#include <fmt/ranges.h>
 
-#include "glm_ops.hpp"
+#include "linalg.hpp"
 #include "spline.hpp"
 
 namespace tpm {
@@ -14,7 +13,7 @@ class Camera {
 public:
   struct Instance {
     float fov;
-    glm::vec3 eye, center, up;
+    fVector3 eye, center, up;
   };
 
   inline Camera::Instance instance(const float &t, const std::size_t &) const {
@@ -22,13 +21,13 @@ public:
   }
 
   Spline<float> fov;
-  Spline<glm::vec3> eye, center, up;
+  Spline<fVector3> eye, center, up;
 };
 class Film {
 public:
   struct Instance {
     std::string filepath;
-    glm::uvec2 resolution;
+    std::pair<std::size_t, std::size_t> resolution;
   };
 
   inline Film::Instance instance(const float &t, const std::size_t &id) const {
@@ -36,7 +35,7 @@ public:
   }
 
   std::string filepath;
-  glm::uvec2 resolution;
+  std::pair<std::size_t, std::size_t> resolution;
 };
 class Scene {
 public:
@@ -57,37 +56,30 @@ public:
   float fps;
 };
 
-template <typename T, typename U>
-inline std::ostream &operator<<(std::ostream &out, const Spline<T, U> &spline) {
-  return out << fmt::format("{}", spline.keyframes);
-}
 inline std::ostream &operator<<(std::ostream &out,
                                 const Camera::Instance &rhs) {
-  return out << fmt::format(
-             "Camera::Instance{{fov={}, eye={}, center={}, up={}}}", rhs.fov,
-             rhs.eye, rhs.center, rhs.up);
+  return out << fmt::format("{{fov={}, eye={}, center={}, up={}}}", rhs.fov,
+                            rhs.eye, rhs.center, rhs.up);
 }
 inline std::ostream &operator<<(std::ostream &out, const Camera &rhs) {
-  return out << fmt::format(
-             "Camera::Instance{{fov={}, eye={}, center={}, up={}}}", rhs.fov,
-             rhs.eye, rhs.center, rhs.up);
+  return out << fmt::format("{{fov={}, eye={}, center={}, up={}}}", rhs.fov,
+                            rhs.eye, rhs.center, rhs.up);
 }
 inline std::ostream &operator<<(std::ostream &out, const Film::Instance &rhs) {
-  return out << fmt::format("Film{{filepath={}, resolution={}}}", rhs.filepath,
+  return out << fmt::format("{{filepath={}, resolution={}}}", rhs.filepath,
                             rhs.resolution);
 }
 inline std::ostream &operator<<(std::ostream &out, const Film &rhs) {
-  return out << fmt::format("Film{{filepath={}, resolution={}}}", rhs.filepath,
+  return out << fmt::format("{{filepath={}, resolution={}}}", rhs.filepath,
                             rhs.resolution);
 }
 inline std::ostream &operator<<(std::ostream &out, const Scene::Instance &rhs) {
-  return out << fmt::format("Scene::Instance{{camera={}, film={}, time={}}}",
-                            rhs.camera, rhs.film, rhs.time);
+  return out << fmt::format("{{camera={}, film={}, time={}}}", rhs.camera,
+                            rhs.film, rhs.time);
 }
 inline std::ostream &operator<<(std::ostream &out, const Scene &rhs) {
-  return out << fmt::format(
-             "Scene{{camera={}, film={}, time_range={}, fps={}}}", rhs.camera,
-             rhs.film, rhs.time_range, rhs.fps);
+  return out << fmt::format("{{camera={}, film={}, time_range={}, fps={}}}",
+                            rhs.camera, rhs.film, rhs.time_range, rhs.fps);
 }
 } // namespace tpm
 
