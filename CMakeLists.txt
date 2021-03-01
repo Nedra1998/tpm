@@ -90,7 +90,6 @@ find_package(OpenCL)
 add_subdirectory(extern/CLI11 EXCLUDE_FROM_ALL)
 add_subdirectory(extern/Catch2 EXCLUDE_FROM_ALL)
 add_subdirectory(extern/fmt EXCLUDE_FROM_ALL)
-add_subdirectory(extern/glm EXCLUDE_FROM_ALL)
 add_subdirectory(extern/magic_enum EXCLUDE_FROM_ALL)
 add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
 

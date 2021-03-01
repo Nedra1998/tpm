@@ -62,11 +62,11 @@ int main(int argc, char **argv) {
       ->transform(CLI::AsSizeValue(true))
       ->group("Logging");
 
-  std::string output = "output/{1:05d}.png";
+  std::string output = "output/{:05d}.png";
 
   app.add_option("-o,--output", output, "Set output file path", true)
       ->check(CLI::RegexValidator(
-          ".*\\.((bmp)|(hdr)|(jpe|jpeg|jpg)|(png)|(tga)|(p[bnp]m))"))
+          ".*\\.((bmp)|(hdr)|(jpeg|jpg)|(png)|(tga))"))
       ->group("Output");
 
   try {
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
   tpm::Scene scene{tpm::Camera{90.0f, tpm::fVector3(0.0, 0.0, 0.0),
                                tpm::fVector3(0.0, 0.0, 10.0),
                                tpm::fVector3(0.0, 1.0, 0.0)},
-                   tpm::Film{output, {1920, 1080}},
+                   tpm::Film{output, {50, 50}},
                    {0.0, 2.0},
                    60.0};
 

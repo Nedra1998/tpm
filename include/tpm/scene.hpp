@@ -31,7 +31,7 @@ public:
   };
 
   inline Film::Instance instance(const float &t, const std::size_t &id) const {
-    return Instance{fmt::format(filepath, t, id), resolution};
+    return Instance{fmt::format(filepath, id), resolution};
   }
 
   std::string filepath;

@@ -1,10 +1,11 @@
 #include "tpm.hpp"
 
+#include "image.hpp"
+#include "linalg.hpp"
 #include "logging.hpp"
+#include "scene.hpp"
 #include "spline.hpp"
 #include "version.hpp"
-#include "scene.hpp"
-#include "linalg.hpp"
 
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -17,7 +18,7 @@
 bool tpm::render(const Scene &scene) {
   LINFO("tpm", "TPM v{}", version::semver);
   LTRACE("tpm", "tpm::render({})", scene);
-  
+
   bool success = true;
   std::size_t frame_id = 0;
   for (float t = scene.time_range.first; t <= scene.time_range.second;
@@ -29,5 +30,8 @@ bool tpm::render(const Scene &scene) {
 }
 bool tpm::render_frame(const Scene::Instance &scene) {
   LTRACE("tpm", "tpm::render_frame({})", scene);
-  return true;
+
+  Image img(scene.film.resolution.first, scene.film.resolution.second);
+
+  return write_image(scene.film.filepath, img);
 }
