@@ -55,6 +55,7 @@ inline std::shared_ptr<spdlog::logger> get(const std::string &logger) {
     } else {
       spdlog_logger = std::make_shared<spdlog::logger>(logger);
     }
+    spdlog_logger->set_level(spdlog::level::level_enum::trace);
     spdlog::register_logger(spdlog_logger);
     tpm::logging::configure_logging();
   }

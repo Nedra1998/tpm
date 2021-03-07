@@ -24,7 +24,7 @@ bool tpm::image::write_bpm(const std::string &file, const Image &img) {
     LERR("tpm::image", "Failed to write BMP \"{}\" image file", file);
     return false;
   }
-  LINFO("tpm::image", "Wrote BMP image \"{}\"", file);
+  LDEBUG("tpm::image", "Wrote BMP image \"{}\"", file);
   return true;
 }
 bool tpm::image::write_hdr(const std::string &file, const Image &img) {
@@ -33,7 +33,7 @@ bool tpm::image::write_hdr(const std::string &file, const Image &img) {
     LERR("tpm::image", "Failed to write HDR \"{}\" image file", file);
     return false;
   }
-  LINFO("tpm::image", "Wrote HDR image \"{}\"", file);
+  LDEBUG("tpm::image", "Wrote HDR image \"{}\"", file);
   return true;
 }
 bool tpm::image::write_jpg(const std::string &file, const Image &img) {
@@ -43,7 +43,7 @@ bool tpm::image::write_jpg(const std::string &file, const Image &img) {
     LERR("tpm::image", "Failed to write JPG \"{}\" image file", file);
     return false;
   }
-  LINFO("tpm::image", "Wrote JPG image \"{}\"", file);
+  LDEBUG("tpm::image", "Wrote JPG image \"{}\"", file);
   return true;
 }
 bool tpm::image::write_tga(const std::string &file, const Image &img) {
@@ -53,7 +53,7 @@ bool tpm::image::write_tga(const std::string &file, const Image &img) {
     LERR("tpm::image", "Failed to write TGA \"{}\" image file", file);
     return false;
   }
-  LINFO("tpm::image", "Wrote TGA image \"{}\"", file);
+  LDEBUG("tpm::image", "Wrote TGA image \"{}\"", file);
   return true;
 }
 bool tpm::image::write_png(const std::string &file, const Image &img) {
@@ -65,18 +65,19 @@ bool tpm::image::write_png(const std::string &file, const Image &img) {
     LERR("tpm::image", "Failed to write PNG \"{}\" image file", file);
     return false;
   }
-  LINFO("tpm::image", "Wrote PNG image \"{}\"", file);
+  LDEBUG("tpm::image", "Wrote PNG image \"{}\"", file);
   return true;
 }
 
 bool tpm::write_image(const std::string &file, const Image &img) {
   std::filesystem::path filepath(file);
-  std::filesystem::path dirpath = std::filesystem::absolute(filepath).parent_path();
-  if(!std::filesystem::exists(dirpath)) {
+  std::filesystem::path dirpath =
+      std::filesystem::absolute(filepath).parent_path();
+  if (!std::filesystem::exists(dirpath)) {
     if (!std::filesystem::create_directories(dirpath)) {
       LERR("tpm::image", "Failed to create output directories \"{}\"", dirpath);
-    }else {
-      LINFO("tpm::image", "Created image output path \"{}\"", dirpath);
+    } else {
+      LDEBUG("tpm::image", "Created image output path \"{}\"", dirpath);
     }
   }
 

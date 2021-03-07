@@ -94,6 +94,8 @@ add_subdirectory(extern/magic_enum EXCLUDE_FROM_ALL)
 add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
 
 add_subdirectory(apps)
+
+option(TPM_OPENCL "Enable OpenCL support" ${OpenCL_FOUND})
 add_subdirectory(src)
 
 # option(TPM_BUILD_TESTING "Build testing targets for TPM" OFF)

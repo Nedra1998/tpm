@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
                                tpm::fVector3(0.0, 0.0, 10.0),
                                tpm::fVector3(0.0, 1.0, 0.0)},
                    tpm::Film{output, {50, 50}},
-                   {0.0, 2.0},
+                   {0.0, 0.0},
                    60.0};
 
   tpm::render(scene);
