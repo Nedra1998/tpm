@@ -13,3 +13,9 @@
 [submodule "extern/fmt"]
 	path = extern/fmt
 	url = git@github.com:fmtlib/fmt.git
+[submodule "extern/grpc"]
+	path = extern/grpc
+	url = git@github.com:grpc/grpc.git
+[submodule "extern/stduuid"]
+	path = extern/stduuid
+	url = git@github.com:mariusbancila/stduuid.git

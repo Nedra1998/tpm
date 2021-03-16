@@ -34,7 +34,7 @@ set_target_properties(tpm PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(
   tpm
   PUBLIC spdlog
-  PRIVATE magic_enum fmt::fmt)
+  PRIVATE magic_enum fmt::fmt stduuid)
 target_include_directories(
   tpm
   PUBLIC ${PROJECT_SOURCE_DIR}/include/ ${CMAKE_CURRENT_BINARY_DIR}/include/

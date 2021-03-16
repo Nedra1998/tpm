@@ -65,8 +65,7 @@ int main(int argc, char **argv) {
   std::string output = "output/{:05d}.png";
 
   app.add_option("-o,--output", output, "Set output file path", true)
-      ->check(CLI::RegexValidator(
-          ".*\\.((bmp)|(hdr)|(jpeg|jpg)|(png)|(tga))"))
+      ->check(CLI::RegexValidator(".*\\.((bmp)|(hdr)|(jpeg|jpg)|(png)|(tga))"))
       ->group("Output");
 
   try {

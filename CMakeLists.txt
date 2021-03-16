@@ -85,14 +85,25 @@ add_formatting(
 include(Analyzers)
 global_analyze()
 
-find_package(OpenCL)
+find_package(OpenCL REQUIRED)
 
 add_subdirectory(extern/CLI11 EXCLUDE_FROM_ALL)
 add_subdirectory(extern/Catch2 EXCLUDE_FROM_ALL)
 add_subdirectory(extern/fmt EXCLUDE_FROM_ALL)
 add_subdirectory(extern/magic_enum EXCLUDE_FROM_ALL)
 add_subdirectory(extern/spdlog EXCLUDE_FROM_ALL)
+set(UUID_BUILD_TESTS OFF)
+add_subdirectory(extern/stduuid EXCLUDE_FROM_ALL)
+set(gRPC_BUILD_CSHARP_EXT OFF)
+set(gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF)
+set(gRPC_BUILD_GRPC_NODE_PLUGIN OFF)
+set(gRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN OFF)
+set(gRPC_BUILD_GRPC_PHP_PLUGIN OFF)
+set(gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF)
+set(gRPC_BUILD_GRPC_RUBY_PLUGIN OFF)
+add_subdirectory(extern/grpc EXCLUDE_FROM_ALL)
 
+add_subdirectory(proto)
 add_subdirectory(apps)
 
 option(TPM_OPENCL "Enable OpenCL support" ${OpenCL_FOUND})

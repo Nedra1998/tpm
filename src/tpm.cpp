@@ -8,16 +8,22 @@
 #include "version.hpp"
 
 #include "gpu.hpp"
+#include "host.hpp"
+#include "orchestrator.hpp"
 
 #include <fmt/format.h>
+
+const std::string kernel = "void kernel tpm(global float *image, const uint2 size) { for (int i = 0; i < size.x * size.y; ++i) { image[3 * i] = 1.0f; image[3 * i + 1] = 0.0f; image[3 * i + 2] = 1.0f; } } ";
 
 bool tpm::render(const Scene &scene) {
   bool success = true;
   LINFO("tpm", "TPM v{}", version::semver);
   LTRACE("tpm", "tpm::render({})", scene);
 
-  gpu::GPULoadBalancer balancer("kernel void testing(write_only image2d_t output) { for (int i = 0; i < 500; ++i) write_imagef(output, (int2)(i, 10), (float4)(1.0, 0.0, 1.0, 1.0)); }");
-  success &= balancer.initialize();
+  Orchestrator orchestrator;
+  orchestrator.push_back(std::make_shared<host::HostLocal>());
+  orchestrator.initialize();
+  orchestrator.compile(kernel);
 
   std::size_t frame_id = 0;
   for (float t = scene.time_range.first; t <= scene.time_range.second;
@@ -26,7 +32,6 @@ bool tpm::render(const Scene &scene) {
     frame_id++;
   }
 
-  success &= balancer.terminate();
   return success;
 }
 bool tpm::render_frame(const Scene::Instance &scene) {

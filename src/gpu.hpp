@@ -2,6 +2,8 @@
 #define TPM_GPU_HPP_
 
 #include <unordered_map>
+#include <future>
+
 #if __has_include(<CL/opencl.hpp>)
 #define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl.h>
@@ -15,11 +17,23 @@
 #include "scene.hpp"
 
 namespace tpm::gpu {
+
+class GpuPool {
+public:
+  GpuPool(const std::string &kernel) : kernel(kernel) {}
+
+  std::future<std::optional<tpm::Image>> enqueue(const Scene::Instance &scene) {
+  }
+
+private:
+  std::string kernel;
+};
 class LoadBalancer {
 public:
   virtual ~LoadBalancer() {}
 
   virtual bool initialize() = 0;
+  virtual void enqueue(const Scene::Instance &scene) = 0;
   virtual std::optional<tpm::Image> execute(const Scene::Instance &scene) = 0;
   virtual bool terminate() = 0;
 };
