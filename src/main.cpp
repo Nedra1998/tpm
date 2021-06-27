@@ -1,6 +1,7 @@
 #include <CL/sycl.hpp>
 #include <cxxopts.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <hipSYCL/sycl/device.hpp>
 #include <hipSYCL/sycl/info/device.hpp>
 #include <hipSYCL/sycl/info/platform.hpp>
@@ -22,13 +23,46 @@
 #include <unistd.h>
 #endif
 
+#define PL_IMPLEMENTATION 1
 #include "log.hpp"
+#include "prof.hpp"
 #include "version.hpp"
 
 void print_info();
 
-int main(int argc, const char **argv) {
+using data_type = float;
 
+std::vector<data_type> add(cl::sycl::queue &q, const std::vector<data_type> &a,
+                           const std::vector<data_type> &b) {
+  PFUNC(&q, a, b);
+  std::vector<data_type> c(a.size());
+
+  assert(a.size() == b.size());
+  cl::sycl::range<1> work_items{a.size()};
+
+  {
+    cl::sycl::buffer<data_type> buff_a(a.data(), a.size());
+    cl::sycl::buffer<data_type> buff_b(b.data(), b.size());
+    cl::sycl::buffer<data_type> buff_c(c.data(), c.size());
+
+    q.submit([&](cl::sycl::handler &cgh) {
+      auto access_a = buff_a.get_access<cl::sycl::access::mode::read>(cgh);
+      auto access_b = buff_b.get_access<cl::sycl::access::mode::read>(cgh);
+      auto access_c = buff_c.get_access<cl::sycl::access::mode::write>(cgh);
+
+      cgh.parallel_for<class vector_add>(work_items, [=](cl::sycl::id<1> tid) {
+        access_c[tid] = access_a[tid] + access_b[tid];
+      });
+    });
+  }
+  return c;
+}
+
+int main(int argc, const char **argv) {
+  PINIT("tpm");
+
+  PBEGIN("Setup");
+  PBEGIN("Argparse");
   cxxopts::Options options(
       "TPM", fmt::format("TPM v{}.{} - C++ Minimal Path Marcher",
                          tpm::version::major, tpm::version::minor));
@@ -41,18 +75,26 @@ int main(int argc, const char **argv) {
     ("I,info", "Display detailed application information");
   // clang-format on
 
+  int exit_code = 0;
   auto result = options.parse(argc, argv);
+  PVAR("help", result.count("help"));
+  PVAR("verbose", result.count("verbose"));
+  PVAR("version", result.count("version"));
+  PVAR("info", result.count("info"));
+  PEND("Argparse");
+
   if (result.count("help") != 0) {
     std::cout << options.help() << std::endl;
-    return 0;
+    exit_code = -1;
   } else if (result.count("version") != 0) {
     std::cout << tpm::version::semver << std::endl;
-    return 0;
+    exit_code = -1;
   } else if (result.count("info") != 0) {
     print_info();
-    return 0;
+    exit_code = -1;
   }
 
+  PBEGIN("Logging");
   try {
     spdlog::level::level_enum log_level = spdlog::level::warn;
     if (result.count("verbose") != 0) {
@@ -86,7 +128,34 @@ int main(int argc, const char **argv) {
     std::cerr << "Log initialization failed: " << ex.what() << std::endl;
     return -1;
   }
+  PEND("Logging");
+  PEND("Setup");
 
+  if (exit_code == 0) {
+    PSCOPE("Calculations");
+    PBEGIN("Initialize");
+    PBEGIN("Queue");
+    cl::sycl::queue q;
+    PEND("Queue");
+    PBEGIN("Vectors");
+    std::vector<data_type> a = {1.f, 2.f, 3.f, 4.f, 5.f};
+    std::vector<data_type> b = {-1.f, 2.f, -3.f, 4.f, -5.f};
+    PEND("Vectors");
+    PEND("Initialize");
+    auto res = add(q, a, b);
+    a = add(q, b, res);
+    b = add(q, res, a);
+    res = add(q, a, res);
+
+    {
+      PSCOPE("IO");
+      std::cout << "Result: " << std::endl;
+      for (const auto x : res)
+        std::cout << x << std::endl;
+    }
+  }
+
+  PSTOP();
   return 0;
 }
 
@@ -105,6 +174,7 @@ int main(int argc, const char **argv) {
 #define INFO_SUB_SUB_FIELD(...) INFO_FIELD3(__VA_ARGS__)
 
 void print_info() {
+  PFUNC();
   INFO_HEADER("Application");
   INFO_FIELD("TPM Version", tpm::version::semver);
 
