@@ -1,3 +1,19 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wformat-pedantic"
+#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#pragma GCC diagnostic ignored "-Wcast-align"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wshorten-64-to-32"
+#pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
+#pragma GCC diagnostic ignored "-Wunused-lambda-capture"
+#pragma GCC diagnostic ignored "-Wstring-conversion"
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wc++20-designator"
+#pragma GCC diagnostic ignored "-Wnested-anon-types"
+#pragma GCC diagnostic ignored "-Wgnu-anonymous-struct"
 // The MIT License (MIT)
 //
 // Copyright(c) 2021, Damien Feneyrou <dfeneyrou@gmail.com>
@@ -5495,3 +5511,4 @@ void plAttachVirtualThread(uint32_t externalVirtualThreadId) {
 }
 
 #endif // if USE_PL==1 && PL_IMPLEMENTATION==1
+#pragma GCC diagnostic pop

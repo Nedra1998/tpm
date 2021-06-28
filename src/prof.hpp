@@ -42,7 +42,6 @@ namespace tpm::prof {
 template <typename T>
 inline std::enable_if_t<std::is_fundamental<T>::value, void>
 fmt(const char *key, T val) {
-  fmt::print("A - {}: {} ({})\n", key, val, typeid(val).name());
   if (PL_IS_ENABLED_())
     plPriv::eventLogData(PL_STRINGHASH(PL_BASEFILENAME),
                          plPriv::fnv1a_(key, PL_FNV_HASH_OFFSET_),
@@ -55,7 +54,7 @@ inline std::enable_if_t<std::is_pointer<T>::value, void> fmt(const char *key,
                                                              T val) {
   if (PL_IS_ENABLED_()) {
     size_t key_length = strlen(key);
-    char *str = (char *)malloc(sizeof(char) * (key_length + 6));
+    char *str = static_cast<char*>(malloc(sizeof(char) * (key_length + 6)));
     strncpy(str, key, key_length + 6);
     strcat(str, "##hexa");
     plPriv::eventLogData(PL_STRINGHASH(PL_BASEFILENAME),

@@ -89,6 +89,7 @@ macro(_enable_extra_compiler_warnings_flags)
     _check_warning_flag(-Wunused-label "${_flags}")
     _check_warning_flag(-Wunused-parameter "${_flags}")
     _check_warning_flag(-Wwrite-strings "${_flags}")
+    _check_warning_flag(-Wno-gnu-zero-variadic-macro-arguments "${_flags}")
   endif()
 endmacro()
 
