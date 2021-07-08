@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace tpm::image {
 
@@ -29,19 +30,19 @@ public:
     if (x >= width || y >= height)
       return;
     std::size_t i = (y * width + x) * 3;
-    if (buffer == Buffer::COLOR && color != nullptr) {
+    if (buffer == Buffer::COLOR && !color.empty()) {
       color[i + 0] = r;
       color[i + 1] = g;
       color[i + 2] = b;
-    } else if (buffer == Buffer::ALBEDO && albedo != nullptr) {
+    } else if (buffer == Buffer::ALBEDO && !albedo.empty()) {
       albedo[i + 0] = r;
       albedo[i + 1] = g;
       albedo[i + 2] = b;
-    } else if (buffer == Buffer::NORMAL && normal != nullptr) {
+    } else if (buffer == Buffer::NORMAL && !normal.empty()) {
       normal[i + 0] = r;
       normal[i + 1] = g;
       normal[i + 2] = b;
-    } else if (buffer == Buffer::DEPTH && depth != nullptr) {
+    } else if (buffer == Buffer::DEPTH && !depth.empty()) {
       i = (y * width + x);
       depth[i] = r;
     }
@@ -51,25 +52,29 @@ public:
   std::uint8_t buffers;
 
 private:
-  float *color, *albedo, *normal, *depth;
+  std::vector<float> color, albedo, normal, depth;
 
   friend class Image;
 };
 
 class Image {
 public:
-  Image(std::size_t width, std::size_t height,
-        std::uint8_t buffers = Buffer::ALL);
+  Image(const std::size_t &width, const std::size_t &height,
+        const std::size_t &tile_size,
+        const std::uint8_t &buffers = Buffer::ALL);
   ~Image();
 
   const float *get_buffer(const Buffer &buffer) const;
 
-  Tile get_tile(const std::size_t &i);
-  void merge_tile(const Tile& tile);
+  Tile get_tile(const std::size_t &i) const;
+  std::vector<Tile> get_tiles() const;
+  void merge_tile(const Tile &tile) ;
   std::size_t tile_count() const;
 
+  inline std::size_t size() const { return width * height; }
+  inline float *get_color() { return color; }
 
-  std::size_t width, height;
+  std::size_t width, height, tile_size;
   std::uint8_t buffers;
 
 private:

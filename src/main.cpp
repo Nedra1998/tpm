@@ -3,9 +3,11 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <hipSYCL/sycl/device.hpp>
+#include <hipSYCL/sycl/handler.hpp>
 #include <hipSYCL/sycl/info/device.hpp>
 #include <hipSYCL/sycl/info/platform.hpp>
 #include <hipSYCL/sycl/platform.hpp>
+#include <hipSYCL/sycl/queue.hpp>
 #include <iostream>
 #include <limits>
 #include <ostream>
@@ -133,46 +135,44 @@ int main(int argc, const char **argv) {
   PEND("Setup");
 
   if (exit_code == 0) {
-    PSCOPE("Calculations");
-    PBEGIN("Initialize");
-    PBEGIN("Queue");
+    PSCOPE("Render");
     cl::sycl::queue q;
-    PEND("Queue");
-    PBEGIN("Vectors");
-    std::vector<data_type> a = {1.f, 2.f, 3.f, 4.f, 5.f};
-    std::vector<data_type> b = {-1.f, 2.f, -3.f, 4.f, -5.f};
-    PEND("Vectors");
-    PEND("Initialize");
-    auto res = add(q, a, b);
-    a = add(q, b, res);
-    b = add(q, res, a);
-    res = add(q, a, res);
+
+    tpm::image::Image img(3840, 2160, 32, tpm::image::COLOR);
 
     {
-      PSCOPE("IO");
-      std::cout << "Result: " << std::endl;
-      for (const auto x : res)
-        std::cout << x << std::endl;
+      std::vector<tpm::image::Tile> tiles = img.get_tiles();
+      cl::sycl::range<1> work_items{tiles.size()};
+      {
+        PSCOPE("CommandGroup", tiles.size());
+        cl::sycl::buffer<tpm::image::Tile> tile_buffer(tiles.data(),
+                                                       img.size());
+        q.submit([&](cl::sycl::handler &cgh) {
+          auto access_tiles =
+              tile_buffer.get_access<cl::sycl::access::mode::read_write>(cgh);
+          cgh.parallel_for<class vector_add>(
+              work_items, [=](cl::sycl::item<1> item) {
+                PSCOPE("Kernel", item.get_linear_id());
+
+                float r =
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                float g =
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                float b =
+                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
+                tpm::image::Tile *tile = &access_tiles[item.get_linear_id()];
+                for (std::size_t x = 0; x < tile->width; ++x)
+                  for (std::size_t y = 0; y < tile->height; ++y)
+                    tile->set(tpm::image::COLOR, x, y, r, g, b);
+              });
+        });
+      }
+      for (auto &tile : tiles)
+        img.merge_tile(tile);
     }
-  }
 
-  if (exit_code == 0) {
-    PSCOPE("Render");
-    tpm::image::Image img(500, 500, tpm::image::COLOR);
-    for (std::size_t i = 0; i < img.tile_count(); ++i) {
-      tpm::image::Tile tile = img.get_tile(i);
-
-      float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-      float g = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-      float b = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-
-      for (std::size_t x = 0; x < tile.width; ++x)
-        for (std::size_t y = 0; y < tile.height; ++y)
-          tile.set(tpm::image::COLOR, x, y, r, g, b);
-      img.merge_tile(tile);
-    }
-
-    tpm::image::write("output-{buffer}.png", img);
+    tpm::image::write("output.png", img);
   }
 
   PSTOP();

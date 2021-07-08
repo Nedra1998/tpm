@@ -14,50 +14,43 @@ tpm::image::Tile::Tile(const std::size_t &width, const std::size_t &height,
                        const std::size_t &xoff, const std::size_t &yoff,
                        const std::uint8_t &buffers)
     : width(width), height(height), xoff(xoff), yoff(yoff), buffers(buffers),
-      color(nullptr), albedo(nullptr), normal(nullptr), depth(nullptr) {
+      color(), albedo(), normal(), depth() {
   PFUNC(width, height, xoff, yoff, buffers);
 
   if (buffers & Buffer::COLOR) {
-    color =
-        static_cast<float *>(std::malloc(width * height * 3 * sizeof(float)));
-    std::fill(color, color + (width * height * 3), 0.0f);
+    color = std::vector<float>(width * height * 3);
+    std::fill(color.begin(), color.end(), 0.0f);
   }
 
   if (buffers & Buffer::ALBEDO) {
-    albedo =
-        static_cast<float *>(std::malloc(width * height * 3 * sizeof(float)));
-    std::fill(albedo, albedo + (width * height * 3), 0.0f);
+    albedo = std::vector<float>(width * height * 3);
+    std::fill(albedo.begin(), albedo.end(), 0.0f);
   }
 
   if (buffers & Buffer::NORMAL) {
-    normal =
-        static_cast<float *>(std::malloc(width * height * 3 * sizeof(float)));
-    std::fill(normal, normal + (width * height * 3), 0.0f);
+    normal = std::vector<float>(width * height * 3);
+    std::fill(normal.begin(), normal.end(), 0.0f);
   }
 
   if (buffers & Buffer::DEPTH) {
-    depth =
-        static_cast<float *>(std::malloc(width * height * 1 * sizeof(float)));
-    std::fill(depth, depth + (width * height * 1), 0.0f);
+    depth = std::vector<float>(width * height * 1);
+    std::fill(depth.begin(), depth.end(), 0.0f);
   }
 }
 
 tpm::image::Tile::~Tile() {
   PFUNC()
-  if (color != nullptr)
-    free(color);
-  if (albedo != nullptr)
-    free(albedo);
-  if (normal != nullptr)
-    free(normal);
-  if (depth != nullptr)
-    free(depth);
+  std::vector<float>().swap(color);
+  std::vector<float>().swap(albedo);
+  std::vector<float>().swap(normal);
+  std::vector<float>().swap(depth);
 }
 
-tpm::image::Image::Image(const std::size_t width, const std::size_t height,
-                         const std::uint8_t buffers)
-    : width(width), height(height), buffers(buffers), color(nullptr),
-      albedo(nullptr), normal(nullptr), depth(nullptr) {
+tpm::image::Image::Image(const std::size_t &width, const std::size_t &height,
+                         const std::size_t &tile_size,
+                         const std::uint8_t &buffers)
+    : width(width), height(height), tile_size(tile_size), buffers(buffers),
+      color(nullptr), albedo(nullptr), normal(nullptr), depth(nullptr) {
   PFUNC(width, height, buffers);
 
   if (buffers & Buffer::COLOR) {
@@ -109,14 +102,39 @@ const float *tpm::image::Image::get_buffer(const Buffer &buffer) const {
   return nullptr;
 }
 
-tpm::image::Tile tpm::image::Image::get_tile(const std::size_t &i) {
+tpm::image::Tile tpm::image::Image::get_tile(const std::size_t &i) const {
   PFUNC(i);
-  std::size_t tiles_wide = ((width / 16) + (width % 16 != 0 ? 1 : 0));
-  std::size_t tiles_tall = ((height / 16) + (height % 16 != 0 ? 1 : 0));
+  std::size_t tiles_wide =
+      ((width / tile_size) + (width % tile_size != 0 ? 1 : 0));
+  std::size_t tiles_tall =
+      ((height / tile_size) + (height % tile_size != 0 ? 1 : 0));
   std::size_t x = i % tiles_wide, y = i / tiles_wide;
-  return Tile(x == tiles_wide - 1 ? 16 - (tiles_wide * 16 - width) : 16,
-              y == tiles_tall - 1 ? 16 - (tiles_tall * 16 - height) : 16,
-              x * 16, y * 16, buffers);
+  return Tile(x == tiles_wide - 1 ? tile_size - (tiles_wide * tile_size - width)
+                                  : tile_size,
+              y == tiles_tall - 1
+                  ? tile_size - (tiles_tall * tile_size - height)
+                  : tile_size,
+              x * tile_size, y * tile_size, buffers);
+}
+
+std::vector<tpm::image::Tile> tpm::image::Image::get_tiles() const {
+  PFUNC();
+  std::vector<Tile> tiles;
+  tiles.reserve(tile_count());
+  std::size_t tiles_wide =
+      ((width / tile_size) + (width % tile_size != 0 ? 1 : 0));
+  std::size_t tiles_tall =
+      ((height / tile_size) + (height % tile_size != 0 ? 1 : 0));
+  for (std::size_t i = 0; i < tile_count(); ++i) {
+    std::size_t x = i % tiles_wide, y = i / tiles_wide;
+    tiles.emplace_back(
+        x == tiles_wide - 1 ? tile_size - (tiles_wide * tile_size - width)
+                            : tile_size,
+        y == tiles_tall - 1 ? tile_size - (tiles_tall * tile_size - height)
+                            : tile_size,
+        x * tile_size, y * tile_size, buffers);
+  }
+  return tiles;
 }
 
 void tpm::image::Image::merge_tile(const Tile &tile) {
@@ -124,35 +142,36 @@ void tpm::image::Image::merge_tile(const Tile &tile) {
   for (std::size_t y = 0; y < tile.height; ++y) {
     std::size_t t = y * tile.width;
     std::size_t i = (tile.yoff + y) * width + tile.xoff;
-    if (tile.color != nullptr)
-      std::memcpy(color + (i * 3), tile.color + (t * 3),
+    if (!tile.color.empty())
+      std::memcpy(color + (i * 3), tile.color.data() + (t * 3),
                   tile.width * 3 * sizeof(float));
-    if (tile.albedo != nullptr)
-      std::memcpy(albedo + (i * 3), tile.albedo + (t * 3),
+    if (!tile.albedo.empty())
+      std::memcpy(albedo + (i * 3), tile.albedo.data() + (t * 3),
                   tile.width * 3 * sizeof(float));
-    if (tile.normal != nullptr)
-      std::memcpy(normal + (i * 3), tile.normal + (t * 3),
+    if (!tile.normal.empty())
+      std::memcpy(normal + (i * 3), tile.normal.data() + (t * 3),
                   tile.width * 3 * sizeof(float));
-    if (tile.depth != nullptr)
-      std::memcpy(depth + (i), tile.depth + (t), tile.width * sizeof(float));
+    if (!tile.depth.empty())
+      std::memcpy(depth + (i), tile.depth.data() + (t),
+                  tile.width * sizeof(float));
   }
 }
 
 std::size_t tpm::image::Image::tile_count() const {
-  return ((width / 16) + (width % 16 != 0 ? 1 : 0)) *
-         ((height / 16) + (height % 16 != 0 ? 1 : 0));
+  return ((width / tile_size) + (width % tile_size != 0 ? 1 : 0)) *
+         ((height / tile_size) + (height % tile_size != 0 ? 1 : 0));
 }
 
 void tpm::image::convert_buffer(const std::size_t &size, const float *in,
                                 std::uint8_t *out) {
-  PFUNC(size, in, out);
+  PFUNC(size);
   for (std::size_t i = 0; i < size; ++i)
     out[i] = static_cast<std::uint8_t>(in[i] * 255.0f);
 }
 
 bool tpm::image::write(const std::string &file_path, const Image &img,
                        const std::uint8_t &buffers) {
-  PFUNC(file_path, &img);
+  PFUNC(file_path, &img, buffers);
   std::filesystem::path path(file_path);
   if ((buffers & img.buffers) == 0) {
     LWARN("Image does not contain any matching buffer types {} != {}. No "

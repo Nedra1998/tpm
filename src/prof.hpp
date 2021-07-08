@@ -37,7 +37,9 @@
   PARGS(__VA_ARGS__);
 #define PBEGIN(...) plBegin(__VA_ARGS__);
 #define PEND(...) plEnd(__VA_ARGS__);
-#define PSCOPE(...) plScope(__VA_ARGS__);
+#define PSCOPE(label, ...)                                                     \
+  plScope(label);                                                              \
+  PARGS(__VA_ARGS__)
 #define PINIT(proc, ...)                                                       \
   plInitAndStart(proc, ##__VA_ARGS__);                                         \
   plDeclareThread("Main");                                                     \
