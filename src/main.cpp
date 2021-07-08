@@ -24,6 +24,7 @@
 #endif
 
 #define PL_IMPLEMENTATION 1
+#include "image.hpp"
 #include "log.hpp"
 #include "prof.hpp"
 #include "version.hpp"
@@ -153,6 +154,25 @@ int main(int argc, const char **argv) {
       for (const auto x : res)
         std::cout << x << std::endl;
     }
+  }
+
+  if (exit_code == 0) {
+    PSCOPE("Render");
+    tpm::image::Image img(500, 500, tpm::image::COLOR);
+    for (std::size_t i = 0; i < img.tile_count(); ++i) {
+      tpm::image::Tile tile = img.get_tile(i);
+
+      float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+      float g = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+      float b = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
+      for (std::size_t x = 0; x < tile.width; ++x)
+        for (std::size_t y = 0; y < tile.height; ++y)
+          tile.set(tpm::image::COLOR, x, y, r, g, b);
+      img.merge_tile(tile);
+    }
+
+    tpm::image::write("output-{buffer}.png", img);
   }
 
   PSTOP();
