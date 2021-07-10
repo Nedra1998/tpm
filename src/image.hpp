@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -67,8 +68,10 @@ public:
   const float *get_buffer(const Buffer &buffer) const;
 
   Tile get_tile(const std::size_t &i) const;
-  std::vector<Tile> get_tiles() const;
-  void merge_tile(const Tile &tile) ;
+  std::vector<Tile> get_tiles(
+      const std::size_t &begin = 0,
+      const std::size_t &end = std::numeric_limits<std::size_t>().max()) const;
+  void merge_tile(const Tile &tile);
   std::size_t tile_count() const;
 
   inline std::size_t size() const { return width * height; }

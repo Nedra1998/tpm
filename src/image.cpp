@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <string>
 
 #include "log.hpp"
@@ -117,15 +118,17 @@ tpm::image::Tile tpm::image::Image::get_tile(const std::size_t &i) const {
               x * tile_size, y * tile_size, buffers);
 }
 
-std::vector<tpm::image::Tile> tpm::image::Image::get_tiles() const {
+std::vector<tpm::image::Tile>
+tpm::image::Image::get_tiles(const std::size_t &begin,
+                             const std::size_t &end) const {
   PFUNC();
   std::vector<Tile> tiles;
-  tiles.reserve(tile_count());
+  tiles.reserve(std::min(end, tile_count()) - begin);
   std::size_t tiles_wide =
       ((width / tile_size) + (width % tile_size != 0 ? 1 : 0));
   std::size_t tiles_tall =
       ((height / tile_size) + (height % tile_size != 0 ? 1 : 0));
-  for (std::size_t i = 0; i < tile_count(); ++i) {
+  for (std::size_t i = begin; i < end && i < tile_count(); ++i) {
     std::size_t x = i % tiles_wide, y = i / tiles_wide;
     tiles.emplace_back(
         x == tiles_wide - 1 ? tile_size - (tiles_wide * tile_size - width)

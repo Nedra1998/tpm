@@ -1,11 +1,14 @@
 #ifndef PROF_HPP_JOF2FZL8
 #define PROF_HPP_JOF2FZL8
 
-#include "palanteer.h"
 #include <cstring>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
+
+#include <fmt/format.h>
+
+#include "palanteer.h"
 
 #define _GET_10TH_ARG(_1, _2, _3, _4, _5, _6, _7, _8, _9, N, ...) N
 

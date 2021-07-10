@@ -30,6 +30,7 @@
 #include "log.hpp"
 #include "prof.hpp"
 #include "version.hpp"
+#include "render.hpp"
 
 void print_info();
 
@@ -139,38 +140,39 @@ int main(int argc, const char **argv) {
     cl::sycl::queue q;
 
     tpm::image::Image img(3840, 2160, 32, tpm::image::COLOR);
+    tpm::render(q, img);
 
-    {
-      std::vector<tpm::image::Tile> tiles = img.get_tiles();
-      cl::sycl::range<1> work_items{tiles.size()};
-      {
-        PSCOPE("CommandGroup", tiles.size());
-        cl::sycl::buffer<tpm::image::Tile> tile_buffer(tiles.data(),
-                                                       img.size());
-        q.submit([&](cl::sycl::handler &cgh) {
-          auto access_tiles =
-              tile_buffer.get_access<cl::sycl::access::mode::read_write>(cgh);
-          cgh.parallel_for<class vector_add>(
-              work_items, [=](cl::sycl::item<1> item) {
-                PSCOPE("Kernel", item.get_linear_id());
-
-                float r =
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-                float g =
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-                float b =
-                    static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-
-                tpm::image::Tile *tile = &access_tiles[item.get_linear_id()];
-                for (std::size_t x = 0; x < tile->width; ++x)
-                  for (std::size_t y = 0; y < tile->height; ++y)
-                    tile->set(tpm::image::COLOR, x, y, r, g, b);
-              });
-        });
-      }
-      for (auto &tile : tiles)
-        img.merge_tile(tile);
-    }
+/*     { */
+/*       std::vector<tpm::image::Tile> tiles = img.get_tiles(); */
+/*       cl::sycl::range<1> work_items{tiles.size()}; */
+/*       { */
+/*         PSCOPE("CommandGroup", tiles.size()); */
+/*         cl::sycl::buffer<tpm::image::Tile> tile_buffer(tiles.data(), */
+/*                                                        img.size()); */
+/*         q.submit([&](cl::sycl::handler &cgh) { */
+/*           auto access_tiles = */
+/*               tile_buffer.get_access<cl::sycl::access::mode::read_write>(cgh); */
+/*           cgh.parallel_for<class vector_add>( */
+/*               work_items, [=](cl::sycl::item<1> item) { */
+/*                 PSCOPE("Kernel", item.get_linear_id()); */
+/*  */
+/*                 float r = */
+/*                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX); */
+/*                 float g = */
+/*                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX); */
+/*                 float b = */
+/*                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX); */
+/*  */
+/*                 tpm::image::Tile *tile = &access_tiles[item.get_linear_id()]; */
+/*                 for (std::size_t x = 0; x < tile->width; ++x) */
+/*                   for (std::size_t y = 0; y < tile->height; ++y) */
+/*                     tile->set(tpm::image::COLOR, x, y, r, g, b); */
+/*               }); */
+/*         }); */
+/*       } */
+/*       for (auto &tile : tiles) */
+/*         img.merge_tile(tile); */
+/*     } */
 
     tpm::image::write("output.png", img);
   }
