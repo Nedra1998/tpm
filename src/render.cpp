@@ -13,7 +13,7 @@
 
 bool tpm::render(cl::sycl::queue &q, image::Image &img) {
   PFUNC(&q, &img);
-  std::size_t tile_batch_size = 1024;
+  std::size_t tile_batch_size = 1024 * 8;
   bool ret = true;
   for (std::size_t i = 0; i < img.tile_count(); i += tile_batch_size)
     ret &= render_tile_batch(q, img, i, tile_batch_size);

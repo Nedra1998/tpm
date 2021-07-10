@@ -31,8 +31,7 @@
 #include "prof.hpp"
 #include "version.hpp"
 #include "render.hpp"
-
-void print_info();
+#include "sysinfo.hpp"
 
 using data_type = float;
 
@@ -94,7 +93,7 @@ int main(int argc, const char **argv) {
     std::cout << tpm::version::semver << std::endl;
     exit_code = -1;
   } else if (result.count("info") != 0) {
-    print_info();
+    tpm::sysinfo::summary();
     exit_code = -1;
   }
 
@@ -133,157 +132,20 @@ int main(int argc, const char **argv) {
     return -1;
   }
   PEND("Logging");
+  PBEGIN("SysInfo");
+  tpm::sysinfo::setup_logger();
+  PEND("SysInfo");
   PEND("Setup");
 
   if (exit_code == 0) {
-    PSCOPE("Render");
     cl::sycl::queue q;
 
     tpm::image::Image img(3840, 2160, 32, tpm::image::COLOR);
     tpm::render(q, img);
-
-/*     { */
-/*       std::vector<tpm::image::Tile> tiles = img.get_tiles(); */
-/*       cl::sycl::range<1> work_items{tiles.size()}; */
-/*       { */
-/*         PSCOPE("CommandGroup", tiles.size()); */
-/*         cl::sycl::buffer<tpm::image::Tile> tile_buffer(tiles.data(), */
-/*                                                        img.size()); */
-/*         q.submit([&](cl::sycl::handler &cgh) { */
-/*           auto access_tiles = */
-/*               tile_buffer.get_access<cl::sycl::access::mode::read_write>(cgh); */
-/*           cgh.parallel_for<class vector_add>( */
-/*               work_items, [=](cl::sycl::item<1> item) { */
-/*                 PSCOPE("Kernel", item.get_linear_id()); */
-/*  */
-/*                 float r = */
-/*                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX); */
-/*                 float g = */
-/*                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX); */
-/*                 float b = */
-/*                     static_cast<float>(rand()) / static_cast<float>(RAND_MAX); */
-/*  */
-/*                 tpm::image::Tile *tile = &access_tiles[item.get_linear_id()]; */
-/*                 for (std::size_t x = 0; x < tile->width; ++x) */
-/*                   for (std::size_t y = 0; y < tile->height; ++y) */
-/*                     tile->set(tpm::image::COLOR, x, y, r, g, b); */
-/*               }); */
-/*         }); */
-/*       } */
-/*       for (auto &tile : tiles) */
-/*         img.merge_tile(tile); */
-/*     } */
 
     tpm::image::write("output.png", img);
   }
 
   PSTOP();
   return 0;
-}
-
-#define INFO_HEADER(label) fmt::print("{}:\n", label);
-#define INFO_FIELD1(key, value, ...)                                           \
-  fmt::print("  {:20}  {}\n", fmt::format("{}:", key),                         \
-             fmt::format(value, ##__VA_ARGS__));
-#define INFO_FIELD2(key, value, ...)                                           \
-  fmt::print("    {:18}  {}\n", fmt::format("{}:", key),                       \
-             fmt::format(value, ##__VA_ARGS__));
-#define INFO_FIELD3(key, value, ...)                                           \
-  fmt::print("      {:16}  {}\n", fmt::format("{}:", key),                     \
-             fmt::format(value, ##__VA_ARGS__));
-#define INFO_FIELD(...) INFO_FIELD1(__VA_ARGS__)
-#define INFO_SUB_FIELD(...) INFO_FIELD2(__VA_ARGS__)
-#define INFO_SUB_SUB_FIELD(...) INFO_FIELD3(__VA_ARGS__)
-
-void print_info() {
-  PFUNC();
-  INFO_HEADER("Application");
-  INFO_FIELD("TPM Version", tpm::version::semver);
-
-  INFO_HEADER("Compilation");
-  INFO_FIELD("C++ Version", "C++{}.{} ({})", ((__cplusplus / 100L) % 100),
-             (__cplusplus % 100), __cplusplus);
-
-#if defined(__clang__) && defined(__apple_build_version)
-  INFO_FIELD("Compiler", "AppleClang v{}.{}.{}", __clang_major__,
-             __clang_minor__, __clang_patchlevel__);
-#elif defined(__clang__)
-  INFO_FIELD("Compiler", "Clang v{}.{}.{}", __clang_major__, __clang_minor__,
-             __clang_patchlevel__);
-#elif defined(__GNUC__)
-#if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-  INFO_FIELD("Compiler", "GNU v{}.{}.{}", __GNUC__, __GNUC_MINOR__,
-             __GNUC_PATCHLEVEL__);
-#elif defined(__GNUC_MINOR__)
-  INFO_FIELD("Compiler", "GNU v{}.{}", __GNUC__, __GNUC_MINOR__);
-#else
-  INFO_FIELD("Compiler", "GNU v{}", __GNUC__);
-#endif
-#elif defined(_MSC_VER)
-#if defined(_MSC_FULL_VER)
-#if _MSC_VER >= 1400
-  INFO_FIELD("Compiler", "MSVC v{}.{}.{}", _MSC_VER / 100, _MSC_VER % 100,
-             _MSC_FULL_VERR % 100000);
-#else
-  INFO_FIELD("Compiler", "v{}.{}.{}", _MSC_VER / 100, _MSC_VER % 100,
-             _MSC_FULL_VERR % 10000);
-#endif
-#else
-  INFO_FIELD("Compiler", "MSVC v{}.{}", _MSC_VER / 100, _MSC_VER % 100);
-#endif
-#else
-  INFO_FIELD("Compiler", "Unknown");
-#endif
-
-#if defined(__TIMESTAMP__)
-  INFO_FIELD("Date & Time", "{}", __TIMESTAMP__);
-#else
-  INFO_FIELD("Date & Time", "{} {}", __DATE__, __TIME__);
-#endif
-
-#if defined(_WIN32) || defined(_WIN64)
-  INFO_FIELD("Operating System", "Windows");
-#elif defined(__APPLE__)
-  INFO_FIELD("Operating System", "MacOS");
-#elif defined(__unix__) || defined(__unix)
-  INFO_FIELD("Operating System", "Linux");
-#else
-  INFO_FIELD("Operating System", "Unknown");
-#endif
-
-  INFO_HEADER("SYCL");
-#ifdef SYCL_LANGUAGE_VERSION
-  INFO_FIELD("SYCL Version", "SYCL {}.{} ({})",
-             ((SYCL_LANGUAGE_VERSION / 100L) % 100),
-             (SYCL_LANGUAGE_VERSION % 100), SYCL_LANGUAGE_VERSION);
-#else
-  INFO_FIELD("SYCL Version", "None");
-#endif
-
-  std::vector<cl::sycl::platform> platforms =
-      cl::sycl::platform::get_platforms();
-  for (const cl::sycl::platform &platform : platforms) {
-    INFO_FIELD(platform.get_info<cl::sycl::info::platform::name>(), "");
-    std::vector<cl::sycl::device> devices = platform.get_devices();
-    for (const cl::sycl::device &device : devices) {
-      INFO_SUB_FIELD(device.get_info<cl::sycl::info::device::name>(),
-                     device.get_info<cl::sycl::info::device::version>());
-      INFO_SUB_SUB_FIELD(
-          "Compute Units", "{}",
-          device.get_info<cl::sycl::info::device::max_compute_units>());
-      double mem =
-          static_cast<double>(
-              device.get_info<cl::sycl::info::device::global_mem_size>()) /
-          1000000000.0;
-      INFO_SUB_SUB_FIELD(
-          "Memory Size", "{:.1f}GB",
-          mem < 10000 ? mem : std::numeric_limits<double>::quiet_NaN());
-      double freq =
-          device.get_info<cl::sycl::info::device::max_clock_frequency>() /
-          1000.0;
-      INFO_SUB_SUB_FIELD(
-          "Clock Frequency", "{:.2f}GHz",
-          freq > 0.01 ? freq : std::numeric_limits<double>::quiet_NaN());
-    }
-  }
 }
