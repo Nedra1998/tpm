@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<tpm>
+  <image path="output.png" width="500" height="500" tileSize="32"/>
+  <renderer spp="32" />
+  <scene>
+    <union>
+      <translate x="0" y="0" z="10">
+        <sphere r="1">
+          <emission color="#2196F3" s="1.0" />
+        </sphere>
+      </translate>
+      <translate x="3" y="0" z="10">
+        <sphere r="1">
+          <emission color="#F44336" s="1.0" />
+        </sphere>
+      </translate>
+    </union>
+  </scene>
+</tpm>

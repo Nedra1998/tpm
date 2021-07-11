@@ -36,5 +36,9 @@ FetchContent_Declare(
   cxxopts
   GIT_REPOSITORY "https://github.com/jarro2783/cxxopts")
 FetchContent_MakeAvailable(cxxopts)
+FetchContent_Declare(
+  pugixml
+  GIT_REPOSITORY "https://github.com/zeux/pugixml")
+FetchContent_MakeAvailable(pugixml)
 
 add_subdirectory(src)

@@ -1,6 +1,8 @@
 #ifndef PROF_HPP_JOF2FZL8
 #define PROF_HPP_JOF2FZL8
 
+#if defined(USE_PL) && USE_PL == 1
+
 #include <cstring>
 #include <string>
 #include <type_traits>
@@ -28,11 +30,7 @@
                 _FE_2, _FE_1, _FE_0)                                           \
   (x, ##__VA_ARGS__)
 
-#if defined(USE_PL) && USE_PL == 1
 #define PVAR(key, val) tpm::prof::fmt(key, val);
-#else
-#define PVAR(key, val)
-#endif
 #define PARG(arg) PVAR(#arg, arg)
 #define PARGS(...) _FOR_EACH(PARG, ##__VA_ARGS__)
 #define PFUNC(...)                                                             \
@@ -53,7 +51,6 @@
 
 namespace tpm::prof {
 
-#if defined(USE_PL) && USE_PL == 1
 template <typename T>
 inline std::enable_if_t<std::is_fundamental<T>::value, void>
 fmt(const char *key, T val) {
@@ -92,7 +89,18 @@ fmt(const char *key, T val) {
                          PL_STORE_COLLECT_CASE_,
                          fmt::format("{}", val).c_str());
 }
-#endif
 } // namespace tpm::prof
+
+#else
+#define PVAR(key, val)
+#define PARG(arg)
+#define PARGS(...)
+#define PFUNC(...)
+#define PBEGIN(...)
+#define PEND(...)
+#define PSCOPE(label, ...)
+#define PINIT(proc, ...)
+#define PSTOP(...)
+#endif
 
 #endif /* end of include guard: PROF_HPP_JOF2FZL8 */

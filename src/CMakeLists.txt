@@ -6,7 +6,7 @@ list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/include/version.hpp")
 add_executable(tpm ${SOURCES})
 target_compile_features(tpm PUBLIC cxx_std_17)
 target_include_directories(tpm PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/include")
-target_link_libraries(tpm PRIVATE fmt spdlog cxxopts)
+target_link_libraries(tpm PRIVATE fmt spdlog cxxopts pugixml)
 
 option(ENABLE_PROF "Enable profiling" OFF)
 if(ENABLE_PROF)
